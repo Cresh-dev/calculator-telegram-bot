@@ -1,20 +1,59 @@
 # -*- coding: utf-8 -*-
-import redis
+
 import os
-import telebot
-# import some_api_lib
-# import ...
+import re
 
-# Example of your code beginning
-#           Config vars
+from telegram.ext import Updater, CommandHandler
+import logging
+
 token = os.environ['TELEGRAM_TOKEN']
-some_api_token = os.environ['SOME_API_TOKEN']
-#             ...
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 
-# If you use redis, install this add-on https://elements.heroku.com/addons/heroku-redis
-r = redis.from_url(os.environ.get("REDIS_URL"))
+logger = logging.getLogger(__name__)
 
-#       Your bot code below
-# bot = telebot.TeleBot(token)
-# some_api = some_api_lib.connect(some_api_token)
-#              ...
+
+# Define a few command handlers. These usually take the two arguments bot and
+# update. Error handlers also receive the raised TelegramError object in error.
+def start(bot, update):
+    """Send a message when the command /start is issued."""
+    exp = update.message.text.replace('/calc', '')
+    exp = "".join(exp.split())
+    if re.match('^[-+]?([0-9][+-/*]?)*$', exp):
+        try:
+            update.message.reply_text(eval(exp))
+        except:
+            update.message.reply_text('Ooops error calculating')
+    else:
+        update.message.reply_text('Wrong pattern')
+
+
+def error(bot, update, error):
+    """Log Errors caused by Updates."""
+    logger.warning('Update "%s" caused error "%s"', update, error)
+
+
+def main():
+    # Create the Updater and pass it your bot's token.
+    updater = Updater(token)
+
+    # Get the dispatcher to register handlers
+    dp = updater.dispatcher
+
+    # on different commands - answer in Telegram
+    dp.add_handler(CommandHandler("calc", start))
+
+    # log all errors
+    dp.add_error_handler(error)
+
+    # Start the Bot
+    updater.start_polling()
+
+    # Block until the user presses Ctrl-C or the process receives SIGINT,
+    # SIGTERM or SIGABRT. This should be used most of the time, since
+    # start_polling() is non-blocking and will stop the bot gracefully.
+    updater.idle()
+
+
+if __name__ == '__main__':
+    main()
