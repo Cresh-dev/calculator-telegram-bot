@@ -19,7 +19,7 @@ def start(bot, update):
     """Send a message when the command /start is issued."""
     exp = update.message.text.replace('/calc', '')
     exp = "".join(exp.split())
-    if re.match('^([(]?([-+]?([0-9][+-/*]?))[)]?)*$', exp):
+    if re.match('^([-+]?([(]?[0-9][)]?[+-/*]?))*$', exp):
         try:
             update.message.reply_text(eval(exp))
         except:
